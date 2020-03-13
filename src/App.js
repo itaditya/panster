@@ -43,7 +43,7 @@ function Player(props) {
           <strong>{episode.podcast_title_original}</strong>
         </p>
         <p className="max-w-sm truncate text-gray-300">{episode.description_original}</p>
-        <Audio src={episode.audio} className="mt-4" />
+        <Audio src={episode.audio} className="mt-4" key="audio-player" />
       </section>
     );
   }
@@ -58,7 +58,7 @@ function Player(props) {
             <strong>{episode.podcast_title_original}</strong>
           </p>
           <p className="max-w-sm text-center text-gray-300">{episode.description_original.substring(0, 140) + '...'}</p>
-          <Audio src={episode.audio} className="mt-5" />
+          <Audio src={episode.audio} className="mt-5" key="audio-player" />
         </Fragment>
       )}
     </section>
@@ -66,7 +66,7 @@ function Player(props) {
 }
 
 function Playlist(props) {
-  const { onEpisodeSelect } = props;
+  const { viewportSize, onEpisodeSelect } = props;
   const [stateEpisodes, setStateEpisodes] = useState({
     status: 'idle',
     data: [],
@@ -88,13 +88,17 @@ function Playlist(props) {
         {stateEpisodes.data.map(episode => (
           <li
             key={episode.id}
-            className="flex items-center justify-evenly px-5 md:px-8 py-2 md:py-4 hover:bg-black"
+            className="flex items-center justify-start px-5 md:px-8 py-2 md:py-4 hover:bg-overlay-300 md:rounded-lg transition-colors duration-100 ease-in"
             onClick={() => onEpisodeSelect(episode)}
           >
-            <img src={episode.image} className="rounded-full w-12 h-12 md:w-20 md:h-20 shadow-lg" />
-            <div className="md:ml-4">
-              <h3 className="max-w-xs md:max-w-lg xl:max-w-2xl truncate text-lg md:text-xl text-gray-200">{episode.title_original}</h3>
-              <p className="max-w-xs md:max-w-lg xl:max-w-2xl truncate text-sm text-gray-400">{episode.description_original}</p>
+            <img src={episode.image} className="rounded-full w-12 h-12 md:w-20 md:h-20 border-gray-400 border-2 shadow-lg" />
+            <div className="ml-4">
+              <h3 className="max-w-sm md:max-w-lg xl:max-w-2xl truncate text-lg md:text-xl text-gray-200">{episode.title_original}</h3>
+              {
+                viewportSize !== 'xs' && (
+                  <p className="max-w-sm md:max-w-lg xl:max-w-2xl truncate text-sm text-gray-400">{episode.description_original}</p>
+                )
+              }
               <div className="text-xs text-gray-400">
                 <span>{DateTime.fromSeconds(episode.audio_length_sec).toFormat("H 'hrs and' mm 'mins'")}</span>
                 <span className="pl-2">Published {DateTime.fromMillis(episode.pub_date_ms).toRelativeCalendar()}</span>
@@ -102,18 +106,27 @@ function Playlist(props) {
             </div>
           </li>
         ))}
+        {
+          viewportSize === 'xs' && (
+            <li className="h-56">
+              {/* This item is there to add extra space at bottom so that the fixed media player on mobile doesn't hide the end items in playlist */}
+            </li>
+          )
+        }
       </ul>
     </section>
   );
 }
 
 export default function App() {
-  const [stateCurrentEpisode, setStateCurrentEpisode] = useState(null);
+  const [stateCurrentEpisode, setStateCurrentEpisode] = useState();
   const [stateViewportSize, setStateViewportSize] = useState('xs');
   useEffect(() => {
     var observer = new ResizeObserver(function(entries) {
       const entry = entries[0];
-      if (entry.contentRect.width >= 500) {
+
+      // sm width from tailwind
+      if (entry.contentRect.width >= 640) {
         setStateViewportSize('sm');
         return;
       }
@@ -124,9 +137,9 @@ export default function App() {
   }, []);
   return (
     <div className="bg-blue-900 min-h-screen relative">
-      <h1 className="text-2xl py-3 pl-8 text-center md:text-left font-bold font-serif text-gray-300">Panster</h1>
+      <h1 className="text-2xl py-3 pl-8 text-center md:text-left font-bold font-serif text-gray-300 bg-overlay-300">Panster</h1>
       <div className="flex">
-        <Playlist onEpisodeSelect={setStateCurrentEpisode} />
+        <Playlist viewportSize={stateViewportSize} onEpisodeSelect={setStateCurrentEpisode} />
         <Player size={stateViewportSize === 'xs' ? 'small' : 'big'} episode={stateCurrentEpisode} />
       </div>
     </div>
