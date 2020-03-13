@@ -120,6 +120,7 @@ export default function App() {
       setStateViewportSize('xs');
     });
     observer.observe(document.body);
+    return () => observer.unobserve(document.body);
   }, []);
   return (
     <div className="bg-blue-900 min-h-screen relative">
